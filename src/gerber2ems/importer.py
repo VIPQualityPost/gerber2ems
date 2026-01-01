@@ -51,7 +51,7 @@ def process_gbrs_to_pngs() -> None:
         logger.warning("No copper gerbers found")
 
     if mask is not None:
-        layers += mask
+        layers.append(mask)
 
     with Pool(initargs=(cfg._config,), initializer=Config.set_config) as p:
         copper_pngs = p.map(partial(gbr_to_png, edge), layers)
