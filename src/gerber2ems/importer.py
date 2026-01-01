@@ -65,7 +65,7 @@ def process_gbrs_to_pngs() -> None:
         copper_imgs = list(geometry.glob("*_Cu.png"))
         mask_img = list(geometry.glob("*mask.png"))[0]
 
-        [and_with_mask(copper_img, mask_img) for copper_img in copper_imgs]
+        [and_with_mask(mask_img, copper_img) for copper_img in copper_imgs]
 
 def detect_edge_crop(edge_filename: Path) -> tuple[int, int, int, int]:
 
@@ -174,7 +174,7 @@ def and_with_mask(mask_png: Path, copper_png: Path) -> None:
 
     result = np.logical_and(copper_arr, mask_arr)
 
-    result_img = Image.fromarray(result)
+    result_img = PIL.Image.fromarray(result)
     result_img.save(copper_png)  # overwrite, or save elsewhere
 
 def get_dimensions(input_filename: str) -> Tuple[int, int]:
