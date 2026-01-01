@@ -61,7 +61,7 @@ def process_gbrs_to_pngs() -> None:
 
         geometry = Path.cwd() / GEOMETRY_DIR
         copper_imgs = list(geometry.glob("*Cu.png"))
-        mask_imgs = list(geometry.glob("*mask.png"))[0]
+        mask_img = list(geometry.glob("*mask.png"))[0]
 
         [and_with_mask(copper_img, mask_img) for copper_img in copper_imgs]
 
