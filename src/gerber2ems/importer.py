@@ -107,7 +107,9 @@ def detect_edge_crop(edge_filename: Path) -> tuple[int, int, int, int]:
         if edge_width != 0:
             break
 
-    ew2 = edge_width // 2
+    ew2 = int(edge_width / 2)
+    w = not_cropped_image.width
+    h = not_cropped_image.height
 
     if not cfg.arguments.debug:
         os.remove(not_cropped_name)
