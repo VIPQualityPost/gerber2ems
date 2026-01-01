@@ -59,8 +59,13 @@ def process_gbrs_to_pngs() -> None:
 
         gbr_to_png(edge, mask)
 
-        mask_img = list(geometry.glob("*mask.png"))
+        mask_imgs = list(geometry.glob("*mask.png"))
         copper_imgs = list(geometry.glob("*Cu.png"))
+
+        if len(mask_imgs) > 1:
+            logger.error("Too many mask files")
+        
+        mask_img = mask_imgs[0]
 
         [and_with_mask(copper_img, mask_img) for copper_img in copper_imgs]
 
