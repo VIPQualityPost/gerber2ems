@@ -53,19 +53,67 @@ def process_gbrs_to_pngs() -> None:
     if mask is not None:
         layers.append(mask)
 
+    crop_size = detect_edge_crop(edge)
+
     with Pool(initargs=(cfg._config,), initializer=Config.set_config) as p:
-        copper_pngs = p.map(partial(gbr_to_png, edge), layers)
+        copper_pngs = p.map(partial(gbr_to_png, crop_size), layers)
 
     if mask is not None:
         logger.debug("Masking gerbers with ROI")
 
         geometry = Path.cwd() / GEOMETRY_DIR
-        copper_imgs = list(geometry.glob("*Cu.png"))
+        copper_imgs = list(geometry.glob("*_Cu.png"))
         mask_img = list(geometry.glob("*mask.png"))[0]
 
         [and_with_mask(copper_img, mask_img) for copper_img in copper_imgs]
 
-def gbr_to_png(edge_filename: Path, gerber_filename: Path) -> None:
+def detect_edge_crop(edge_filename: Path) -> tuple[int, int, int, int]:
+
+    output_filename = Path.cwd() / GEOMETRY_DIR / gerber_filename.with_suffix(".png").name.rpartition("-")[2]
+
+    dpi = 1 / (cfg.pixel_size * BASE_UNIT / 0.0254)
+    logger.debug("Finding dimensions of edge at %d DPI for %s", dpi, edge_filename)
+
+    not_cropped_name = output_filename.with_stem(output_filename.stem + "_not_cropped")
+
+    if not dpi.is_integer():
+        logger.warning("DPI is not an integer number: %f", dpi)
+
+    gerbv_command = [
+        "gerbv",
+        edge_filename,
+        "--background=#000000",
+        "--foreground=#00007f",
+        "--dpi", f"{dpi}",
+        "--border=0",
+        "--export=png",
+        "-o", not_cropped_name,
+        "-a",
+    ]
+
+    subprocess.run(gerbv_command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    not_cropped_image = PIL.Image.open(not_cropped_name)
+
+    edge_width = 0
+    v_probe = not_cropped_image.height / 2
+    px_access = not_cropped_image.load()
+    for i in range(not_cropped_image.width):
+        px = px_access[i, v_probe]
+        if 0xBF > px[2] > 0x3F:
+            # px belongs to edge
+            edge_width += 1
+            continue
+        if edge_width != 0:
+            break
+
+    ew2 = edge_width // 2
+
+    os.remove(not_cropped_name)
+
+    return (ew2, ew2, w - ew2, h - ew2)
+
+def gbr_to_png(crop_size: tuple[int, int, int, int], gerber_filename: Path) -> None:
     """Generate PNG from gerber file.
 
     Generates PNG of a gerber using gerbv.
@@ -100,25 +148,13 @@ def gbr_to_png(edge_filename: Path, gerber_filename: Path) -> None:
 
     not_cropped_image = PIL.Image.open(not_cropped_name)
 
-    edge_width = 0
-    v_probe = not_cropped_image.height / 2
-    px_access = not_cropped_image.load()
-    for i in range(not_cropped_image.width):
-        px = px_access[i, v_probe]
-        if 0xBF > px[2] > 0x3F:
-            # px belongs to edge
-            edge_width += 1
-            continue
-        if edge_width != 0:
-            break
-    ew2 = int(edge_width / 2)
-    cropped_image = not_cropped_image.crop((ew2, ew2, not_cropped_image.width - ew2, not_cropped_image.height - ew2))
+    cropped_image = not_cropped_image.crop(crop_size)
     cropped_image.save(output_filename)
 
     if not cfg.arguments.debug:
         os.remove(not_cropped_name)
 
-def and_with_mask(copper_png: Path, mask_png: Path) -> None:
+def and_with_mask(mask_png: Path, copper_png: Path) -> None:
     """Logical AND converted gerber with mask.
 
     Used for selecting ROI on large designs.
