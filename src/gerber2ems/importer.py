@@ -50,15 +50,16 @@ def process_gbrs_to_pngs() -> None:
     if len(layers) == 0:
         logger.warning("No copper gerbers found")
 
+    if mask is not None:
+        layers += mask
+
     with Pool(initargs=(cfg._config,), initializer=Config.set_config) as p:
         copper_pngs = p.map(partial(gbr_to_png, edge), layers)
 
     if mask is not None:
         logger.debug("Masking gerbers with ROI")
-        geometry = Path.cwd() / "ems/geometry"
 
-        gbr_to_png(edge, mask)
-
+        geometry = Path.cwd() / GEOMETRY_DIR
         mask_imgs = list(geometry.glob("*mask.png"))
         copper_imgs = list(geometry.glob("*Cu.png"))
 
