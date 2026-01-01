@@ -40,7 +40,7 @@ def process_gbrs_to_pngs() -> None:
 
     fab = Path.cwd() / "fab"
     edge = next(fab.glob("*Edge_Cuts.gbr"), None)
-    mask = next(fab.glob("*gerber2ems-mask.gbr"),None)
+    mask = list(fab.glob("*gerber2ems-mask.gbr"))
 
     if edge is None:
         logger.error("No edge_cuts gerber found")
