@@ -117,8 +117,8 @@ def and_with_mask(copper_png: Path, mask_png: Path) -> None:
     Used for selecting ROI on large designs.
     """
     logger.debug("Masking %s with %s")
-    copper = Image.open(copper_png).convert("1")  # binary
-    mask = Image.open(mask_png).convert("1")
+    copper = PIL.Image.open(copper_png).convert("1")  # binary
+    mask = PIL.Image.open(mask_png).convert("1")
 
     if copper.size != mask.size:
         logger.error("Copper and mask PNG sizes do not match")
