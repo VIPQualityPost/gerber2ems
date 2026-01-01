@@ -40,7 +40,7 @@ def process_gbrs_to_pngs() -> None:
 
     fab = Path.cwd() / "fab"
     edge = next(fab.glob("*Edge_Cuts.gbr"), None)
-    mask = list(fab.glob("*gerber2ems-mask.gbr"))
+    mask = next(fab.glob("*gerber2ems-mask.gbr"), None)
 
     if edge is None:
         logger.error("No edge_cuts gerber found")
@@ -51,10 +51,7 @@ def process_gbrs_to_pngs() -> None:
         logger.warning("No copper gerbers found")
 
     if mask is not None:
-        if len(mask) > 1:
-            logger.error("Too many mask files")
-
-        layers += mask[0]
+        layers += mask
 
     with Pool(initargs=(cfg._config,), initializer=Config.set_config) as p:
         copper_pngs = p.map(partial(gbr_to_png, edge), layers)
