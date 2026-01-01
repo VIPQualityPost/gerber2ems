@@ -46,9 +46,6 @@ def process_gbrs_to_pngs() -> None:
         logger.error("No edge_cuts gerber found")
         sys.exit(1)
 
-    if mask is not None:
-        mask_png = gbr_to_png(edge, mask)
-
     layers = list(fab.glob("*_Cu.gbr"))
     if len(layers) == 0:
         logger.warning("No copper gerbers found")
@@ -57,22 +54,9 @@ def process_gbrs_to_pngs() -> None:
         copper_pngs = p.map(partial(gbr_to_png, edge), layers)
 
     if mask_png is not None:
+        logger.debug("Masking gerbers with ROI")
+        mask_png = gbr_to_png(edge, mask)
         copper_png.map(partial(and_with_mask, mask_png), copper_pngs)
-
-def and_with_mask(copper_png: Path, mask_png: Path) -> None:
-    copper = Image.open(copper_png).convert("1")  # binary
-    mask = Image.open(mask_png).convert("1")
-
-    if copper.size != mask.size:
-        logger.error("Copper and mask PNG sizes do not match")
-
-    copper_arr = np.array(copper, dtype=bool)
-    mask_arr = np.array(mask, dtype=bool)
-
-    result = np.logical_and(copper_arr, mask_arr)
-
-    result_img = Image.fromarray(result)
-    result_img.save(copper_png)  # overwrite, or save elsewhere
 
 def gbr_to_png(edge_filename: Path, gerber_filename: Path) -> None:
     """Generate PNG from gerber file.
@@ -127,6 +111,25 @@ def gbr_to_png(edge_filename: Path, gerber_filename: Path) -> None:
     if not cfg.arguments.debug:
         os.remove(not_cropped_name)
 
+def and_with_mask(copper_png: Path, mask_png: Path) -> None:
+    """Logical AND converted gerber with mask.
+
+    Used for selecting ROI on large designs.
+    """
+    logger.debug("Masking %s with %s")
+    copper = Image.open(copper_png).convert("1")  # binary
+    mask = Image.open(mask_png).convert("1")
+
+    if copper.size != mask.size:
+        logger.error("Copper and mask PNG sizes do not match")
+
+    copper_arr = np.array(copper, dtype=bool)
+    mask_arr = np.array(mask, dtype=bool)
+
+    result = np.logical_and(copper_arr, mask_arr)
+
+    result_img = Image.fromarray(result)
+    result_img.save(copper_png)  # overwrite, or save elsewhere
 
 def get_dimensions(input_filename: str) -> Tuple[int, int]:
     """Return board dimensions based on png.
