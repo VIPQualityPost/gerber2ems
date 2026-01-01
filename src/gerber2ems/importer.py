@@ -55,8 +55,14 @@ def process_gbrs_to_pngs() -> None:
 
     if mask is not None:
         logger.debug("Masking gerbers with ROI")
-        mask_png = gbr_to_png(edge, mask)
-        [and_with_mask(copper_png, mask_png) for copper_png in copper_pngs]
+        geometry = Path.cwd() / "ems/geometry"
+
+        gbr_to_png(edge, mask)
+
+        mask_img = list(geometry.glob("*mask.png"))
+        copper_imgs = list(geometry.glob("*Cu.png"), None)
+
+        [and_with_mask(copper_img, mask_img) for copper_img in copper_imgs]
 
 def gbr_to_png(edge_filename: Path, gerber_filename: Path) -> None:
     """Generate PNG from gerber file.
@@ -116,7 +122,7 @@ def and_with_mask(copper_png: Path, mask_png: Path) -> None:
 
     Used for selecting ROI on large designs.
     """
-    logger.debug("Masking %s with %s")
+    logger.debug("Masking %s with %s", copper_png, mask_png)
     copper = PIL.Image.open(copper_png).convert("1")  # binary
     mask = PIL.Image.open(mask_png).convert("1")
 
