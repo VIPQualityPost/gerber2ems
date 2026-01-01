@@ -51,7 +51,10 @@ def process_gbrs_to_pngs() -> None:
         logger.warning("No copper gerbers found")
 
     if mask is not None:
-        layers += mask
+        if len(mask) > 1:
+            logger.error("Too many mask files")
+
+        layers += mask[0]
 
     with Pool(initargs=(cfg._config,), initializer=Config.set_config) as p:
         copper_pngs = p.map(partial(gbr_to_png, edge), layers)
@@ -60,13 +63,8 @@ def process_gbrs_to_pngs() -> None:
         logger.debug("Masking gerbers with ROI")
 
         geometry = Path.cwd() / GEOMETRY_DIR
-        mask_imgs = list(geometry.glob("*mask.png"))
         copper_imgs = list(geometry.glob("*Cu.png"))
-
-        if len(mask_imgs) > 1:
-            logger.error("Too many mask files")
-        
-        mask_img = mask_imgs[0]
+        mask_imgs = list(geometry.glob("*mask.png"))[0]
 
         [and_with_mask(copper_img, mask_img) for copper_img in copper_imgs]
 
