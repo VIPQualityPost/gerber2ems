@@ -69,7 +69,7 @@ def process_gbrs_to_pngs() -> None:
 
 def detect_edge_crop(edge_filename: Path) -> tuple[int, int, int, int]:
 
-    output_filename = Path.cwd() / GEOMETRY_DIR / gerber_filename.with_suffix(".png").name.rpartition("-")[2]
+    output_filename = Path.cwd() / GEOMETRY_DIR / edge_filename.with_suffix(".png").name.rpartition("-")[2]
 
     dpi = 1 / (cfg.pixel_size * BASE_UNIT / 0.0254)
     logger.debug("Finding dimensions of edge at %d DPI for %s", dpi, edge_filename)
@@ -109,7 +109,8 @@ def detect_edge_crop(edge_filename: Path) -> tuple[int, int, int, int]:
 
     ew2 = edge_width // 2
 
-    os.remove(not_cropped_name)
+    if not cfg.arguments.debug:
+        os.remove(not_cropped_name)
 
     return (ew2, ew2, w - ew2, h - ew2)
 
