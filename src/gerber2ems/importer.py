@@ -56,7 +56,7 @@ def process_gbrs_to_pngs() -> None:
     if mask is not None:
         logger.debug("Masking gerbers with ROI")
         mask_png = gbr_to_png(edge, mask)
-        copper_png.map(partial(and_with_mask, mask_png), copper_pngs)
+        copper_pngs.map(partial(and_with_mask, mask_png), copper_pngs)
 
 def gbr_to_png(edge_filename: Path, gerber_filename: Path) -> None:
     """Generate PNG from gerber file.
