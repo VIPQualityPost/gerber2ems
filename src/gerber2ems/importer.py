@@ -53,7 +53,7 @@ def process_gbrs_to_pngs() -> None:
     with Pool(initargs=(cfg._config,), initializer=Config.set_config) as p:
         copper_pngs = p.map(partial(gbr_to_png, edge), layers)
 
-    if mask_png is not None:
+    if mask is not None:
         logger.debug("Masking gerbers with ROI")
         mask_png = gbr_to_png(edge, mask)
         copper_png.map(partial(and_with_mask, mask_png), copper_pngs)
