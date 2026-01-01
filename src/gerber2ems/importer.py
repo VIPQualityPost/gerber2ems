@@ -56,7 +56,7 @@ def process_gbrs_to_pngs() -> None:
     crop_size = detect_edge_crop(edge)
 
     with Pool(initargs=(cfg._config,), initializer=Config.set_config) as p:
-        copper_pngs = p.map(partial(gbr_to_png, crop_size), layers)
+        copper_pngs = p.map(partial(gbr_to_png, crop_size, edge), layers)
 
     if mask is not None:
         logger.debug("Masking gerbers with ROI")
@@ -116,7 +116,7 @@ def detect_edge_crop(edge_filename: Path) -> tuple[int, int, int, int]:
 
     return (ew2, ew2, w - ew2, h - ew2)
 
-def gbr_to_png(crop_size: tuple[int, int, int, int], gerber_filename: Path) -> None:
+def gbr_to_png(crop_size: tuple[int, int, int, int], edge_filename: Path, gerber_filename: Path) -> None:
     """Generate PNG from gerber file.
 
     Generates PNG of a gerber using gerbv.
